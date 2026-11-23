@@ -76,36 +76,13 @@ details textarea{border:1px solid var(--line);border-radius:8px;min-height:90px;
     </div>
   </header>
 
-  <div class="opts" id="opts">
-    <span class="lab">احذف:</span>
-    <label class="tog"><input type="checkbox" id="t-name" data-t="name" checked><span>الأسماء</span></label>
-    <label class="tog"><input type="checkbox" id="t-phone" data-t="phone" checked><span>الهواتف</span></label>
-    <label class="tog"><input type="checkbox" id="t-email" data-t="email" checked><span>البريد</span></label>
-    <label class="tog"><input type="checkbox" id="t-cin" data-t="cin" checked><span>البطاقة الوطنية</span></label>
-    <label class="tog"><input type="checkbox" id="t-account" data-t="account" checked><span>الحسابات والبطاقات</span></label>
-    <label class="tog"><input type="checkbox" id="t-address" data-t="address" checked><span>العناوين</span></label>
-    <label class="tog"><input type="checkbox" id="t-url" data-t="url" checked><span>الروابط</span></label>
-    <label class="tog"><input type="checkbox" id="t-number" data-t="number" checked><span>الأرقام الطويلة</span></label>
-    <label class="tog"><input type="checkbox" id="t-date" data-t="date"><span>التواريخ</span></label>
-    <span class="lab" style="margin-inline-start:8px">الاستبدال:</span>
-    <select id="style" aria-label="شكل الاستبدال">
-      <option value="num">[اسم 1]</option>
-      <option value="gen">[اسم]</option>
-      <option value="bar">███</option>
-    </select>
-    <select id="lang" aria-label="لغة الوسوم">
-      <option value="ar">وسوم بالعربية</option>
-      <option value="fr">Étiquettes FR</option>
-    </select>
-  </div>
-
   <div class="grid">
     <section class="panel">
       <div class="ph">
         <h2>النص الأصلي</h2>
-        <div class="btns"><button id="clear" type="button">مسح</button></div>
+        <div class="btns"><button id="paste" type="button" class="primary">لصق نص جديد</button><button id="clear" type="button">مسح</button></div>
       </div>
-      <textarea id="src" dir="auto" spellcheck="false" placeholder="الصق النص هنا…"></textarea>
+      <textarea id="src" dir="auto" spellcheck="false" placeholder="الصق النص هنا… (اللصق يعوّض النص القديم تلقائياً)"></textarea>
     </section>
     <section class="panel">
       <div class="ph">
@@ -125,8 +102,8 @@ details textarea{border:1px solid var(--line);border-radius:8px;min-height:90px;
   </details>
 
   <section class="found" id="found" hidden>
-    <h3>ما تم حذفه</h3>
-    <p class="hint">اضغط على أي عنصر لإبقائه ظاهراً في النص، واضغط مرة أخرى لحذفه.</p>
+    <h3>الأسماء المحذوفة</h3>
+    <p class="hint">اضغط على أي اسم لإبقائه في النص، واضغط مرة أخرى لحذفه.</p>
     <div class="chips" id="chips"></div>
   </section>
 </div>
@@ -145,16 +122,19 @@ function norm(s){
 }
 const S=str=>new Set(str.split(/\s+/).filter(Boolean).map(norm));
 
-const AR_TITLES=S('السيد السيدة الأستاذ الأستاذة الدكتور الدكتورة المدعو المدعوة السي لالة لالا الحاج الحاجة المرحوم المرحومة الطفل الطفلة الأخ الأخت الآنسة المسمى المسماة المواطن المواطنة الزوج الزوجة المتهم المتهمة الضحية المشتكي المشتكية الشاهد الشاهدة الموكل الموكلة مولاي سيدي الشريف الفقيه القاضي');
+const AR_TITLES=S('السيد السيدة الأستاذ الأستاذة الدكتور الدكتورة المدعو المدعوة السي لالة لالا الحاج الحاجة المرحوم المرحومة الهالك الهالكة الطفل الطفلة الآنسة المسمى المسماة مولاي سيدي');
+/* roles: never part of a name; a name may follow them */
+const AR_ROLES=S(`المشتكي المشتكية المشتكى المشتكيه المتهم المتهمة الظنين الظنينة المدعي المدعية المدعى الضحية الشاهد الشاهدة المصرح المصرحة العارض العارضة الموكل الموكلة المتضرر المتضررة المشتبه الموقوف الموقوفة المعتقل المعتقلة المطلوب المطلوبة المستأنف المستأنفة المستأنف المعني المعنية المذكور المذكورة الطرف الطاعن الطاعنة الجاني القاصر القاصرة الحدث المواطن المواطنة الزوج الزوجة الأب الأم الابن الابنة الأخ الأخت المالك المكتري المكري البائع المشتري المستفيد المشغل الأجير الأجيرة الدائن المدين الكفيل الوارث الورثة الموظف الموظفة الطالب الطالبة المحامي المحامية الطبيب الطبيبة المدير المديرة القاضي الوكيل الرئيس الكاتب الضابط المفتش العون الدفاع النيابة المحكمة الشركة الإدارة الجمعية`);
 const LA_TITLES=S('mr mrs ms miss m mme mlle dr me pr prof monsieur madame mademoiselle maitre maître sir docteur');
-const AR_FIRST=S(`محمد أحمد محمود مصطفى يوسف يونس ياسين ياسر أيوب إبراهيم إسماعيل علي حسن حسين حمزة خالد رشيد سمير طارق عادل عثمان عمر عماد مراد مهدي المهدي نبيل هشام وليد زكرياء زكريا أنس إلياس آدم ريان سفيان سليمان عبدالله عبدالرحيم عبدالرحمن عبدالكريم عبدالعزيز عبداللطيف عبدالحق عبدالإله جمال جواد حميد خليل صلاح فؤاد لحسن الحسن الحسين امحمد منير نورالدين نوفل هاني وائل أسامة بلال توفيق إدريس بدر أشرف أيمن حاتم زهير سعد شعيب صهيب عزالدين عصام عبدالصمد عبدالمجيد عبدالقادر عبدالسلام كمال لؤي مالك ماجد مروان معاذ ناصر نزار هيثم يحيى يعقوب
+const AR_FIRST=S(`سعيد كريم عزيز رضا طه محمد أحمد محمود مصطفى يوسف يونس ياسين ياسر أيوب إبراهيم إسماعيل علي حسن حسين حمزة خالد رشيد سمير طارق عادل عثمان عمر عماد مراد مهدي المهدي نبيل هشام وليد زكرياء زكريا أنس إلياس آدم ريان سفيان سليمان عبدالله عبدالرحيم عبدالرحمن عبدالكريم عبدالعزيز عبداللطيف عبدالحق عبدالإله جمال جواد حميد خليل صلاح فؤاد لحسن الحسن الحسين امحمد منير نورالدين نوفل هاني وائل أسامة بلال توفيق إدريس بدر أشرف أيمن حاتم زهير سعد شعيب صهيب عزالدين عصام عبدالصمد عبدالمجيد عبدالقادر عبدالسلام كمال لؤي مالك ماجد مروان معاذ ناصر نزار هيثم يحيى يعقوب
 فاطمة خديجة عائشة مريم زينب سلمى سارة حنان نادية نعيمة سعاد ليلى لطيفة رشيدة سميرة أمينة إيمان أسماء هاجر يسرى سهام صفاء نوال غيثة ياسمين رانيا إكرام شيماء كوثر هند حليمة مليكة نزهة ابتسام فدوى لبنى دنيا نهى سناء أميمة سكينة خولة رقية حفصة جيهان عزيزة فتيحة زهور ثورية سلوى مونية`);
 const LA_FIRST=S(`mohamed mohammed mohammad muhammad mehdi ahmed ahmad youssef yousef youssouf younes youness yassine yassin yasser amine ayoub ibrahim brahim ismail abdellah abdallah abdelilah abderrahim abderrahmane abdelkader abdelaziz abdellatif abdelhak abdessamad abdeslam ali hassan hasan hussein houssam hamza khalid khaled rachid samir tarik tariq adil adel othmane othman omar imad karim mourad nabil hicham hisham walid zakaria zakariae anas ilyas ilias adam rayan soufiane sofiane souleymane jamal jawad hamid hakim reda salah taha fouad lahcen mounir noureddine nawfal naoufal badr bilal taoufik driss idriss achraf ayman hatim zouhair saad chouaib marouane mouad nasser hamid mustapha mustafa mahmoud
 fatima fatim fatimazahra khadija aicha aisha meryem mariam maryam zineb zaineb salma sara sarah hanane nadia naima souad leila laila latifa rachida samira amina imane iman asmaa asma hajar yousra siham safae safaa nawal ghita yasmine yasmina rania ikram chaimae chaima kawtar kaoutar hind halima malika nezha ibtissam fadwa loubna dounia douae sanaa oumaima oumayma sakina khaoula rokaya hafsa jihane fatiha zhor touria mounia
 john david michael james robert william marie jean pierre paul sophie anna maria julie nicolas thomas laura emma lucas louis claire`);
 const AR_CONN=S('بن ابن بنت ولد بنت ايت آيت أيت أولاد ابو أبو بو عبد أم');
 const LA_CONN=S('ben bent ould ait aït el al ibn abou abu bou de da van von bin');
-const AR_STOP=S(`و في من على إلى الى عن مع هذا هذه ذلك تلك الذي التي الذين اللذين اللواتي قال قالت كان كانت يكون تكون ليس أن إن أو ثم حيث لدى عند بعد قبل منذ حتى كل بعض غير
+const AR_STOP=S(`إنه أنه انه إنها أنها انها لا لم لن ما ماذا كما هناك هنا ليست كذلك أيضا جدا فقط قد كي لأن لان بأن بان وأن وان فإن عليه عليها عليهم عليهما له لها لهم لهما به بها بهم منه منها منهم عنه عنها عنهم إليه إليها إليهم معه معها معهم لديه لديها فيه فيها نفسه نفسها ذاته ذاتها أعلاه المذكور المذكورة السالف السالفة الذكر المحضر الشكاية الشكاية الدعوى الملف الحكم القرار العامة القضائية الملك وكيل
+و في من على إلى الى عن مع هذا هذه ذلك تلك الذي التي الذين اللذين اللواتي قال قالت كان كانت يكون تكون ليس أن إن أو ثم حيث لدى عند بعد قبل منذ حتى كل بعض غير
 يسكن تسكن الساكن الساكنة القاطن القاطنة المزداد المزدادة ازداد ازدادت البالغ البالغة عمره عمرها رقم هاتف هاتفه هاتفها بطاقة بطاقته بطاقتها عنوان عنوانه بتاريخ تاريخ يوم سنة شهر
 المدير المديرة الطبيب الطبيبة المحامي المحامية الموظف الموظفة الحامل الحاملة بصفته بصفتها الأستاذ الأستاذة الطالب الطالبة التلميذ التلميذة الذي إذ إذا لكن بل قد لقد هو هي هم
 حضر حضرت ذهب ذهبت جاء جاءت اتصل اتصلت صرح صرحت أكد أكدت أخبر أخبرت طلب طلبت قام قامت يعمل تعمل يبلغ تبلغ والد والدة زوج زوجة أخ أخت ابنه ابنته رفقة ضد لفائدة`);
@@ -192,23 +172,32 @@ function gap(text,a,b,allowDot){
 /* ---------- names ---------- */
 function findNames(text){
   const T=tokenize(text), found=[];
-  const stop=t=>isLatin(t.w)?LA_STOP.has(t.n):AR_STOP.has(t.n);
+  const stop=t=>isLatin(t.w)?LA_STOP.has(t.n):(AR_STOP.has(t.n)||prefLen(t.n,AR_ROLES)>=0);
+  const role=t=>!isLatin(t.w)&&prefLen(t.n,AR_ROLES)>=0;
   for(let i=0;i<T.length;i++){
     const t=T[i];
     // 1) title + following words
-    if(isTitle(t) && i+1<T.length && gap(text,t,T[i+1],true)){
+    if((isTitle(t)||role(t)) && i+1<T.length && gap(text,t,T[i+1],true)){
       let j=i+1;
-      while(j<T.length && isTitle(T[j]) && j+1<T.length && gap(text,T[j],T[j+1],true)) j++;
+      while(j<T.length && (isTitle(T[j])||role(T[j])) && j+1<T.length && gap(text,T[j],T[j+1],true)) j++;
       const f=T[j];
       if(!f||stop(f)||isTitle(f)) continue;
       const latin=isLatin(f.w);
+      /* after a role word, accept only a known first name or a word that is not a common ال- noun */
+      if(!latin && f.n.startsWith('ال') && !AR_FIRST.has(f.n)) continue;
+      /* after a role word (المشتكي، المتهم…) only a known first name or عبد/أبو + name counts */
+      if(!latin && role(T[j-1]) && !isTitle(T[j-1]) && !AR_FIRST.has(f.n) && !/^(عبد|ابو)$/.test(f.n)){
+        const nx=T[j+1], fam=nx && gap(text,f,nx) && !stop(nx) && ((nx.n.startsWith('بن')&&nx.n.length>=4)||(nx.n.startsWith('ال')&&/ي$/.test(nx.n)));
+        if(!fam) continue;
+      }
       if(latin && !isCap(f.w)) continue;
       let last=j,count=1,k=j+1;
       while(k<T.length && gap(text,T[k-1],T[k])){
         const x=T[k];
         const conn=latin?LA_CONN.has(x.n):AR_CONN.has(x.n);
         if(conn && k+1<T.length && gap(text,x,T[k+1]) && !stop(T[k+1])){ last=k+1; k+=2; continue; }
-        if(stop(x)||isTitle(x)||count>=(latin?3:2)) break;
+        if(stop(x)||isTitle(x)||count>=3) break;
+        if(!latin && count>=2 && !(x.n.startsWith('ال')||x.n.startsWith('بن'))) break;
         if(latin && !isCap(x.w)) break;
         if(!latin && isLatin(x.w)) break;
         last=k; count++; k++;
@@ -235,7 +224,7 @@ function findNames(text){
       }else{
         if(isLatin(x.w)) break;
         if(AR_CONN.has(x.n) && k+1<T.length && gap(text,x,T[k+1]) && !AR_STOP.has(T[k+1].n)){ last=k+1; k+=2; count++; continue; }
-        if(AR_STOP.has(x.n)||isTitle(x)) break;
+        if(stop(x)||isTitle(x)) break;
         if((x.n.startsWith('ال')&&x.n.length>=4) || (x.n.startsWith('بن')&&x.n.length>=4) || AR_FIRST.has(x.n)){ last=k; k++; count++; continue; }
         break;
       }
@@ -257,25 +246,6 @@ function fuzzy(s){
   }).join('')).join('[\\s\\u00A0]+');
 }
 
-/* ---------- structured data ---------- */
-const RULES=[
-  ['email', new RegExp('[A-Za-z0-9._%+\\-]+@[A-Za-z0-9\\-]+(?:\\.[A-Za-z0-9\\-]+)+','g')],
-  ['url',   new RegExp('(?:https?:\\/\\/|www\\.)[^\\s<>"\']+[^\\s<>"\'.,،;:!?)\\]]','gi')],
-  ['account', new RegExp('(?<![A-Za-z0-9])[A-Z]{2}\\d{2}(?:[ ]?[A-Z0-9]{4}){3,7}(?:[ ]?[A-Z0-9]{1,4})?(?![A-Za-z0-9])','g')],
-  ['phone', new RegExp(NBD+'(?:\\+|00)[1-9]'+DG+'{0,2}[\\s.\\-]?(?:\\(0\\)[\\s.\\-]?)?'+DG+'(?:[\\s.\\-]?'+DG+'){7,11}'+ND,'gu')],
-  ['account', new RegExp(NBD+DG+'(?:[ \\-]?'+DG+'){12,29}'+ND,'gu')],
-  ['phone', new RegExp(NBD+'[0٠][5-8٥-٨](?:[\\s.\\-]?'+DG+'){8}'+ND,'gu')],
-  ['cin',   new RegExp('(?<![A-Za-z0-9])[A-Z]{1,2}[ ]?'+DG+'{5,7}'+ND,'gu')],
-  ['date',  new RegExp(NBD+'(?:'+DG+'{1,2}[\\/\\-.]'+DG+'{1,2}[\\/\\-.]'+DG+'{2,4}|'+DG+'{4}[\\/\\-.]'+DG+'{1,2}[\\/\\-.]'+DG+'{1,2})'+ND,'gu')],
-  ['number',new RegExp(NBD+DG+'{8,}'+ND,'gu')],
-  ['address',new RegExp('(?<!['+LT+'])((?:و|ب|وب|ل)?)((?:زنقة|زنقه|شارع|درب|حي|إقامة|اقامة|عمارة|تجزئة|دوار|ساحة|Rue|Avenue|Av\\.|Bd|Boulevard|Résidence|Residence|Quartier|Hay|Derb|Lotissement|Immeuble|Imm\\.|Appt|Appartement)(?!['+LT+'])[^\\n,،.؛;]{2,60})','gu')]
-];
-
-const LABELS={
-  ar:{name:'اسم',phone:'هاتف',email:'بريد',url:'رابط',account:'رقم حساب',cin:'بطاقة وطنية',date:'تاريخ',number:'رقم',address:'عنوان'},
-  fr:{name:'NOM',phone:'TÉLÉPHONE',email:'EMAIL',url:'LIEN',account:'COMPTE',cin:'CIN',date:'DATE',number:'NUMÉRO',address:'ADRESSE'}
-};
-
 /* ---------- state ---------- */
 const $=id=>document.getElementById(id);
 const src=$('src'), out=$('out'), custom=$('custom');
@@ -285,91 +255,75 @@ function store(k,v){try{ if(v===undefined) return localStorage.getItem(k); local
 
 function run(){
   const text=src.value;
-  const on=t=>{const el=document.querySelector('[data-t="'+t+'"]');return el&&el.checked;};
-  const lang=$('lang').value, style=$('style').value, L=LABELS[lang];
   const spans=[], items=new Map();
   const overlaps=(s,e)=>spans.some(x=>s<x.e && e>x.s);
-  const note=(type,key,text,isKept)=>{
-    const id=type+'|'+key;
-    if(!items.has(id)) items.set(id,{type,key,text,count:0,kept:isKept});
-    items.get(id).count++;
+  const note=(key,text,isKept)=>{
+    if(!items.has(key)) items.set(key,{key,text,count:0,kept:isKept});
+    items.get(key).count++;
   };
-
-  for(const [type,re] of RULES){
-    if(!on(type)) continue;
-    re.lastIndex=0; let m;
+  const extra=custom.value.split('\n').map(x=>x.trim()).filter(x=>x.length>=2);
+  const full=[...extra,...findNames(text)];
+  const groups=new Map();
+  for(const f of full){ const k=norm(f); if(k.length>=2 && !groups.has(k)) groups.set(k,f); }
+  const lookup=new Map(), shown=[];
+  for(const [k,f] of groups){
+    if(kept.has(k)){ note(k,f,true); continue; }
+    lookup.set(k,k); shown.push(f);
+  }
+  for(const [k,f] of groups){
+    if(kept.has(k)) continue;
+    for(const w of f.split(/\s+/)){
+      const n=norm(w);
+      if(n.length<3||lookup.has(n)||AR_CONN.has(n)||LA_CONN.has(n)||AR_STOP.has(n)||LA_STOP.has(n)||AR_ROLES.has(n)||AR_TITLES.has(n)||LA_TITLES.has(n)) continue;
+      lookup.set(n,k); shown.push(w);
+    }
+  }
+  if(shown.length){
+    const alts=[...new Set(shown)].sort((a,b)=>b.length-a.length).map(fuzzy).join('|');
+    const re=new RegExp('(?<!['+LT+'])('+AR_PREF.join('|')+')?('+alts+')(?!['+LT+'])','giu');
+    let m;
     while((m=re.exec(text))){
-      let s=m.index, val=m[0];
-      if(type==='address'){ s+=m[1].length; val=m[2].replace(/\s+$/,''); }
-      const e=s+val.length, key=norm(val);
+      const word=m[2], key=lookup.get(norm(word));
+      if(!key){ re.lastIndex=m.index+1; continue; }
+      if(/^[a-z]/.test(word)) continue;
+      const pre=m[1]||'';
+      /* a lone و/ف before the name stays so the sentence still reads; ب/ل/ك go with the name */
+      const keepPre=/^[وف]/.test(pre)?1:0;
+      const s=m.index+keepPre, e=m.index+pre.length+word.length;
       if(overlaps(s,e)) continue;
-      if(kept.has(type+'|'+key)){ note(type,key,val,true); continue; }
-      spans.push({s,e,type,key}); note(type,key,val,false);
+      spans.push({s,e,key}); note(key,groups.get(key),false);
     }
   }
-
-  if(on('name')){
-    const extra=custom.value.split('\n').map(x=>x.trim()).filter(x=>x.length>=2);
-    const full=[...extra,...findNames(text)];
-    const groups=new Map(); // norm(full) -> display
-    for(const f of full){ const k=norm(f); if(k.length>=2 && !groups.has(k)) groups.set(k,f); }
-    const lookup=new Map(); // norm string -> group key
-    const shown=[];
-    for(const [k,f] of groups){
-      if(kept.has('name|'+k)){ note('name',k,f,true); continue; }
-      lookup.set(k,k); shown.push(f);
-    }
-    for(const [k,f] of groups){
-      if(kept.has('name|'+k)) continue;
-      for(const w of f.split(/\s+/)){
-        const n=norm(w);
-        if(n.length<3||lookup.has(n)||AR_CONN.has(n)||LA_CONN.has(n)||AR_STOP.has(n)||LA_STOP.has(n)||AR_TITLES.has(n)||LA_TITLES.has(n)) continue;
-        lookup.set(n,k); shown.push(w);
-      }
-    }
-    if(shown.length){
-      const alts=[...new Set(shown)].sort((a,b)=>b.length-a.length).map(fuzzy).join('|');
-      const re=new RegExp('(?<!['+LT+'])('+AR_PREF.join('|')+')?('+alts+')(?!['+LT+'])','giu');
-      let m;
-      while((m=re.exec(text))){
-        const word=m[2], key=lookup.get(norm(word));
-        if(!key) { re.lastIndex=m.index+1; continue; }
-        if(/^[a-z]/.test(word)) continue;
-        const s=m.index+(m[1]?m[1].length:0), e=s+word.length;
-        if(overlaps(s,e)) continue;
-        spans.push({s,e,type:'name',key}); note('name',key,groups.get(key),false);
-      }
-    }
-  }
-
   spans.sort((a,b)=>a.s-b.s);
-  const nums={}; const label=sp=>{
-    nums[sp.type]=nums[sp.type]||new Map();
-    const mp=nums[sp.type]; if(!mp.has(sp.key)) mp.set(sp.key,mp.size+1);
-    if(style==='bar') return '███';
-    if(style==='gen') return '['+L[sp.type]+']';
-    return '['+L[sp.type]+' '+mp.get(sp.key)+']';
-  };
-  let html='', p='', pos=0;
-  const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-  for(const sp of spans){
-    const lab=label(sp); sp.lab=lab;
-    p+=text.slice(pos,sp.s)+lab; html+=esc(text.slice(pos,sp.s))+'<mark class="r">'+esc(lab)+'</mark>'; pos=sp.e;
-  }
-  p+=text.slice(pos); html+=esc(text.slice(pos));
-  plain=p; out.innerHTML=html;
-  $('count').textContent=spans.length?'· '+spans.length+' حذف':'';
 
-  const labOf=new Map(spans.map(s=>[s.type+'|'+s.key,s.lab]));
+  /* remove each name and tidy the spaces around it */
+  const PUNCT=/[،,.:;؛!?)\]»"]/;
+  let p='', pos=0;
+  for(const sp of spans){
+    let s=sp.s, e=sp.e;
+    const before=text[s-1], after=text[e];
+    let chunk=text.slice(pos,s);
+    if(after===undefined||after==='\n'||after===' '||PUNCT.test(after)){
+      chunk=chunk.replace(/[ \t ]+$/,'');
+      if(after===' ' && (chunk===''||/\n$/.test(chunk)||/[(«"\[]$/.test(chunk))) e++;
+    }
+    p+=chunk; pos=e;
+  }
+  p+=text.slice(pos);
+  p=p.replace(/[ \t ]{2,}/g,' ').replace(/[ \t ]+([،,.:;؛!?)])/g,'$1')
+     .replace(/([،,])\s*([،,])/g,'$1').replace(/\(\s*\)/g,'').replace(/^[ \t]+/gm,'');
+  plain=p; out.textContent=p;
+  $('count').textContent=groups.size-[...items.values()].filter(i=>i.kept).length>0 ? '· حُذف '+spans.length : '';
+
   const chips=$('chips'); chips.textContent='';
-  for(const [id,it] of items){
+  for(const [key,it] of items){
     const b=document.createElement('button');
     b.type='button'; b.className='chip'+(it.kept?' kept':'');
-    b.title=it.kept?'اضغط لحذفه من النص':'اضغط لإبقائه ظاهراً';
-    const k=document.createElement('span'); k.className='k'; k.textContent=it.kept?'ظاهر':(labOf.get(id)||L[it.type]);
+    b.title=it.kept?'اضغط لحذفه من النص':'اضغط لإبقائه في النص';
+    const k=document.createElement('span'); k.className='k'; k.textContent=it.kept?'باقٍ':'محذوف';
     const v=document.createElement('span'); v.className='v'; v.textContent=it.text;
     b.append(k,v);
-    b.addEventListener('click',()=>{ kept.has(id)?kept.delete(id):kept.add(id); run(); });
+    b.addEventListener('click',()=>{ kept.has(key)?kept.delete(key):kept.add(key); run(); });
     chips.append(b);
   }
   $('found').hidden=items.size===0;
@@ -378,9 +332,18 @@ function run(){
 let tm; const later=()=>{clearTimeout(tm);tm=setTimeout(run,120);};
 src.addEventListener('input',later);
 custom.addEventListener('input',()=>{store('mimha-custom',custom.value);later();});
-document.querySelectorAll('#opts input,#opts select').forEach(el=>el.addEventListener('change',()=>{
-  if(el.tagName==='SELECT') store('mimha-'+el.id,el.value); run();
-}));
+/* pasting always replaces the old text */
+src.addEventListener('paste',e=>{
+  const t=e.clipboardData&&e.clipboardData.getData('text');
+  if(t==null||t==='') return;
+  e.preventDefault(); src.value=t; kept.clear(); run();
+});
+$('paste').addEventListener('click',()=>{
+  const fallback=()=>{ src.focus(); src.select(); toast('ألصق الآن: سيُعوَّض النص القديم'); };
+  if(navigator.clipboard&&navigator.clipboard.readText){
+    navigator.clipboard.readText().then(t=>{ if(!t){fallback();return;} src.value=t; kept.clear(); run(); toast('تم اللصق'); },fallback);
+  }else fallback();
+});
 
 function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),1800);}
 function fallbackCopy(){
@@ -400,12 +363,11 @@ $('copy').addEventListener('click',()=>{
 $('clear').addEventListener('click',()=>{src.value='';kept.clear();run();src.focus();});
 
 const c=store('mimha-custom'); if(c){custom.value=c; $('more').open=true;}
-for(const id of ['style','lang']){const v=store('mimha-'+id); if(v) $(id).value=v;}
 
-src.value='مثال (امسحه والصق نصك):\n'+
-'حضر السيد كريم بناني، الساكن بزنقة الياسمين رقم 14 حي السلام، إلى المكتب رفقة زوجته فاطمة الزهراء العلوي. '+
-'هاتف كريم: 0612345678، وبريده karim.bennani@gmail.com، ورقم بطاقته الوطنية BK123456.\n\n'+
-'Mme Salma El Idrissi a confirmé le virement sur le RIB 011 780 0000123456789012 34. Contact : +212 6 61 23 45 67.';
+src.value='مثال (الصق نصك فوقه مباشرة):\n'+
+'حضر السيد كريم بناني، الساكن بالدار البيضاء، إلى المكتب رفقة زوجته فاطمة الزهراء العلوي، وصرح المشتكي أن المشتكى عليه يوسف التازي لم يؤد له المبلغ. '+
+'وأضاف كريم أن الشاهد سعيد بنعلي كان حاضراً.\n\n'+
+'Mme Salma El Idrissi a confirmé que M. Karim Bennani était présent.';
 run();
 })();
 </script>
