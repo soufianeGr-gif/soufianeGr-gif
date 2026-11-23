@@ -1,0 +1,411 @@
+<meta charset="utf-8">
+<title>ممحاة الأسماء</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Readex+Pro:wght@500;600&display=swap">
+<style>
+/* Layout: one working sheet, source text beside the cleaned text, options above, findings below */
+:root{
+  --bg:#EDF0F3; --surface:#FFFFFF; --ink:#141B26; --muted:#5A6575; --line:#D3DAE2;
+  --accent:#0E6E62; --accent-soft:#DDEFEC; --bar:#141B26; --bar-fg:#EEF2F6;
+  --f-body:"IBM Plex Sans Arabic",system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;
+  --f-head:"Readex Pro","IBM Plex Sans Arabic",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0E131A; --surface:#161D27; --ink:#E5EAF0; --muted:#95A2B3; --line:#2A3442;
+  --accent:#4DC1AE; --accent-soft:#16332F; --bar:#E5EAF0; --bar-fg:#0E131A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E131A; --surface:#161D27; --ink:#E5EAF0; --muted:#95A2B3; --line:#2A3442;
+  --accent:#4DC1AE; --accent-soft:#16332F; --bar:#E5EAF0; --bar-fg:#0E131A; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.7;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+header{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:10px}
+h1{font-family:var(--f-head);font-size:1.7rem;margin:0;line-height:1.2;text-wrap:balance}
+h1 .bar{display:inline-block;background:var(--bar);color:var(--bar-fg);padding:0 .35em;border-radius:3px;margin-inline-start:.2em}
+.lock{display:flex;align-items:center;gap:8px;font-size:.88rem;color:var(--accent);background:var(--accent-soft);padding:6px 12px;border-radius:999px}
+.lock svg{width:15px;height:15px;flex:none}
+.opts{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.opts .lab{font-size:.8rem;color:var(--muted);letter-spacing:.02em;margin-inline-end:4px}
+.tog{position:relative}
+.tog input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.tog span{display:inline-block;padding:6px 12px;border:1px solid var(--line);border-radius:999px;background:var(--surface);font-size:.88rem;cursor:pointer;user-select:none}
+.tog input:checked+span{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tog input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+select{font:inherit;font-size:.88rem;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.grid{display:grid;grid-template-columns:1fr;gap:16px}
+@media (min-width:900px){.grid{grid-template-columns:1fr 1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;display:flex;flex-direction:column;min-width:0}
+.ph{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.ph h2{font-family:var(--f-head);font-size:1rem;margin:0}
+.ph .meta{font-size:.82rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.btns{display:flex;gap:6px;flex-wrap:wrap}
+button{font:inherit;font-size:.9rem;border-radius:8px;padding:7px 14px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+button:hover{border-color:var(--muted)}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface);font-weight:600}
+textarea{font:inherit;font-size:1rem;line-height:1.8;border:0;outline:0;resize:vertical;padding:14px;background:transparent;color:var(--ink);min-height:300px;width:100%;border-radius:0 0 12px 12px}
+textarea:focus-visible{box-shadow:inset 0 0 0 2px var(--accent)}
+#out{padding:14px;font-size:1rem;line-height:2;white-space:pre-wrap;overflow-wrap:anywhere;min-height:300px;max-height:70vh;overflow:auto;user-select:text}
+#out:empty::before{content:"النص بعد الحذف سيظهر هنا.";color:var(--muted)}
+mark.r{background:var(--bar);color:var(--bar-fg);border-radius:3px;padding:1px 5px;font-size:.9em;white-space:nowrap}
+details{background:var(--surface);border:1px solid var(--line);border-radius:12px}
+summary{cursor:pointer;padding:10px 14px;font-weight:600;font-family:var(--f-head);font-size:.95rem}
+details .in{padding:0 14px 14px;display:flex;flex-direction:column;gap:8px}
+details textarea{border:1px solid var(--line);border-radius:8px;min-height:90px;font-size:.95rem}
+.hint{font-size:.84rem;color:var(--muted);margin:0}
+.found{display:flex;flex-direction:column;gap:10px}
+.found h3{font-family:var(--f-head);font-size:1rem;margin:0}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:8px;padding:5px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-size:.88rem;cursor:pointer;max-width:100%}
+.chip .k{font-size:.75rem;color:var(--muted)}
+.chip .v{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.chip.kept{border-style:dashed;opacity:.75}
+.chip.kept .v{text-decoration:line-through}
+.toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 18px;border-radius:999px;font-size:.9rem;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+</style>
+
+<div class="wrap" dir="rtl" lang="ar">
+  <header>
+    <h1>ممحاة <span class="bar">الأسماء</span></h1>
+    <div class="lock">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+      كل شيء يتم داخل جهازك. النص لا يُرسل إلى أي مكان.
+    </div>
+  </header>
+
+  <div class="opts" id="opts">
+    <span class="lab">احذف:</span>
+    <label class="tog"><input type="checkbox" id="t-name" data-t="name" checked><span>الأسماء</span></label>
+    <label class="tog"><input type="checkbox" id="t-phone" data-t="phone" checked><span>الهواتف</span></label>
+    <label class="tog"><input type="checkbox" id="t-email" data-t="email" checked><span>البريد</span></label>
+    <label class="tog"><input type="checkbox" id="t-cin" data-t="cin" checked><span>البطاقة الوطنية</span></label>
+    <label class="tog"><input type="checkbox" id="t-account" data-t="account" checked><span>الحسابات والبطاقات</span></label>
+    <label class="tog"><input type="checkbox" id="t-address" data-t="address" checked><span>العناوين</span></label>
+    <label class="tog"><input type="checkbox" id="t-url" data-t="url" checked><span>الروابط</span></label>
+    <label class="tog"><input type="checkbox" id="t-number" data-t="number" checked><span>الأرقام الطويلة</span></label>
+    <label class="tog"><input type="checkbox" id="t-date" data-t="date"><span>التواريخ</span></label>
+    <span class="lab" style="margin-inline-start:8px">الاستبدال:</span>
+    <select id="style" aria-label="شكل الاستبدال">
+      <option value="num">[اسم 1]</option>
+      <option value="gen">[اسم]</option>
+      <option value="bar">███</option>
+    </select>
+    <select id="lang" aria-label="لغة الوسوم">
+      <option value="ar">وسوم بالعربية</option>
+      <option value="fr">Étiquettes FR</option>
+    </select>
+  </div>
+
+  <div class="grid">
+    <section class="panel">
+      <div class="ph">
+        <h2>النص الأصلي</h2>
+        <div class="btns"><button id="clear" type="button">مسح</button></div>
+      </div>
+      <textarea id="src" dir="auto" spellcheck="false" placeholder="الصق النص هنا…"></textarea>
+    </section>
+    <section class="panel">
+      <div class="ph">
+        <h2>النص بدون أسماء <span class="meta" id="count"></span></h2>
+        <div class="btns"><button id="copy" type="button" class="primary">نسخ النص</button></div>
+      </div>
+      <div id="out" dir="auto"></div>
+    </section>
+  </div>
+
+  <details id="more">
+    <summary>أسماء أخرى أريد حذفها دائماً</summary>
+    <div class="in">
+      <p class="hint">اكتب كل اسم في سطر. تُحفظ هذه القائمة في هذا الجهاز فقط.</p>
+      <textarea id="custom" dir="auto" spellcheck="false" placeholder="مثلاً:&#10;شركة الأمل&#10;Youssef Amrani"></textarea>
+    </div>
+  </details>
+
+  <section class="found" id="found" hidden>
+    <h3>ما تم حذفه</h3>
+    <p class="hint">اضغط على أي عنصر لإبقائه ظاهراً في النص، واضغط مرة أخرى لحذفه.</p>
+    <div class="chips" id="chips"></div>
+  </section>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function(){
+"use strict";
+const DG='[0-9\\u0660-\\u0669\\u06F0-\\u06F9]', ND='(?![0-9\\u0660-\\u0669\\u06F0-\\u06F9])', NBD='(?<![0-9\\u0660-\\u0669\\u06F0-\\u06F9])';
+const LT='\\p{L}\\p{M}';
+
+function norm(s){
+  return s.normalize('NFD').replace(/[̀-ًͯ-ٰٟـ]/g,'')
+    .replace(/[اأإآٱ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي')
+    .toLowerCase().replace(/\s+/g,' ').trim();
+}
+const S=str=>new Set(str.split(/\s+/).filter(Boolean).map(norm));
+
+const AR_TITLES=S('السيد السيدة الأستاذ الأستاذة الدكتور الدكتورة المدعو المدعوة السي لالة لالا الحاج الحاجة المرحوم المرحومة الطفل الطفلة الأخ الأخت الآنسة المسمى المسماة المواطن المواطنة الزوج الزوجة المتهم المتهمة الضحية المشتكي المشتكية الشاهد الشاهدة الموكل الموكلة مولاي سيدي الشريف الفقيه القاضي');
+const LA_TITLES=S('mr mrs ms miss m mme mlle dr me pr prof monsieur madame mademoiselle maitre maître sir docteur');
+const AR_FIRST=S(`محمد أحمد محمود مصطفى يوسف يونس ياسين ياسر أيوب إبراهيم إسماعيل علي حسن حسين حمزة خالد رشيد سمير طارق عادل عثمان عمر عماد مراد مهدي المهدي نبيل هشام وليد زكرياء زكريا أنس إلياس آدم ريان سفيان سليمان عبدالله عبدالرحيم عبدالرحمن عبدالكريم عبدالعزيز عبداللطيف عبدالحق عبدالإله جمال جواد حميد خليل صلاح فؤاد لحسن الحسن الحسين امحمد منير نورالدين نوفل هاني وائل أسامة بلال توفيق إدريس بدر أشرف أيمن حاتم زهير سعد شعيب صهيب عزالدين عصام عبدالصمد عبدالمجيد عبدالقادر عبدالسلام كمال لؤي مالك ماجد مروان معاذ ناصر نزار هيثم يحيى يعقوب
+فاطمة خديجة عائشة مريم زينب سلمى سارة حنان نادية نعيمة سعاد ليلى لطيفة رشيدة سميرة أمينة إيمان أسماء هاجر يسرى سهام صفاء نوال غيثة ياسمين رانيا إكرام شيماء كوثر هند حليمة مليكة نزهة ابتسام فدوى لبنى دنيا نهى سناء أميمة سكينة خولة رقية حفصة جيهان عزيزة فتيحة زهور ثورية سلوى مونية`);
+const LA_FIRST=S(`mohamed mohammed mohammad muhammad mehdi ahmed ahmad youssef yousef youssouf younes youness yassine yassin yasser amine ayoub ibrahim brahim ismail abdellah abdallah abdelilah abderrahim abderrahmane abdelkader abdelaziz abdellatif abdelhak abdessamad abdeslam ali hassan hasan hussein houssam hamza khalid khaled rachid samir tarik tariq adil adel othmane othman omar imad karim mourad nabil hicham hisham walid zakaria zakariae anas ilyas ilias adam rayan soufiane sofiane souleymane jamal jawad hamid hakim reda salah taha fouad lahcen mounir noureddine nawfal naoufal badr bilal taoufik driss idriss achraf ayman hatim zouhair saad chouaib marouane mouad nasser hamid mustapha mustafa mahmoud
+fatima fatim fatimazahra khadija aicha aisha meryem mariam maryam zineb zaineb salma sara sarah hanane nadia naima souad leila laila latifa rachida samira amina imane iman asmaa asma hajar yousra siham safae safaa nawal ghita yasmine yasmina rania ikram chaimae chaima kawtar kaoutar hind halima malika nezha ibtissam fadwa loubna dounia douae sanaa oumaima oumayma sakina khaoula rokaya hafsa jihane fatiha zhor touria mounia
+john david michael james robert william marie jean pierre paul sophie anna maria julie nicolas thomas laura emma lucas louis claire`);
+const AR_CONN=S('بن ابن بنت ولد بنت ايت آيت أيت أولاد ابو أبو بو عبد أم');
+const LA_CONN=S('ben bent ould ait aït el al ibn abou abu bou de da van von bin');
+const AR_STOP=S(`و في من على إلى الى عن مع هذا هذه ذلك تلك الذي التي الذين اللذين اللواتي قال قالت كان كانت يكون تكون ليس أن إن أو ثم حيث لدى عند بعد قبل منذ حتى كل بعض غير
+يسكن تسكن الساكن الساكنة القاطن القاطنة المزداد المزدادة ازداد ازدادت البالغ البالغة عمره عمرها رقم هاتف هاتفه هاتفها بطاقة بطاقته بطاقتها عنوان عنوانه بتاريخ تاريخ يوم سنة شهر
+المدير المديرة الطبيب الطبيبة المحامي المحامية الموظف الموظفة الحامل الحاملة بصفته بصفتها الأستاذ الأستاذة الطالب الطالبة التلميذ التلميذة الذي إذ إذا لكن بل قد لقد هو هي هم
+حضر حضرت ذهب ذهبت جاء جاءت اتصل اتصلت صرح صرحت أكد أكدت أخبر أخبرت طلب طلبت قام قامت يعمل تعمل يبلغ تبلغ والد والدة زوج زوجة أخ أخت ابنه ابنته رفقة ضد لفائدة`);
+const LA_STOP=S(`le la les un une des du de et ou mais donc or ni car à au aux en dans par pour sur avec sans sous chez the a an and or of to in on at for with by from is was il elle ils elles nous vous je tu
+lundi mardi mercredi jeudi vendredi samedi dimanche janvier février fevrier mars avril mai juin juillet août aout septembre octobre novembre décembre decembre monday tuesday wednesday thursday friday saturday sunday january february march april may june july august september october november december
+rue avenue boulevard maroc morocco france casablanca rabat marrakech fes fès tanger agadir oujda meknes kenitra tetouan`);
+
+const AR_PREF=['وب','ول','فل','و','ف','ب','ل','ك'];
+const isLatin=w=>/^[A-Za-zÀ-ɏ'’-]+$/.test(w);
+const isCap=w=>/^[A-ZÀ-Þ]/.test(w);
+const isAllCaps=w=>/^[A-ZÀ-Þ]{3,}$/.test(w);
+
+function prefLen(n,set){
+  if(set.has(n)) return 0;
+  for(const p of AR_PREF){ if(n.length>p.length+1 && n.startsWith(p) && set.has(n.slice(p.length))) return p.length; }
+  return -1;
+}
+function isTitle(t){
+  if(isLatin(t.w)) return LA_TITLES.has(t.n);
+  if(prefLen(t.n,AR_TITLES)>=0) return true;
+  const m=t.n.match(/^(?:و|ف)?لل(.+)$/);
+  return !!(m && AR_TITLES.has('ال'+m[1]));
+}
+
+function tokenize(text){
+  const re=/[\p{L}\p{M}]+(?:['’\-][\p{L}\p{M}]+)*/gu, out=[];
+  let m; while((m=re.exec(text))) out.push({w:m[0],n:norm(m[0]),s:m.index,e:m.index+m[0].length});
+  return out;
+}
+function gap(text,a,b,allowDot){
+  const g=text.slice(a.e,b.s);
+  return allowDot ? /^\.?[ \t ]+$/.test(g) || /^[ \t ]*$/.test(g)&&g.length>0 : /^[ \t ]+$/.test(g);
+}
+
+/* ---------- names ---------- */
+function findNames(text){
+  const T=tokenize(text), found=[];
+  const stop=t=>isLatin(t.w)?LA_STOP.has(t.n):AR_STOP.has(t.n);
+  for(let i=0;i<T.length;i++){
+    const t=T[i];
+    // 1) title + following words
+    if(isTitle(t) && i+1<T.length && gap(text,t,T[i+1],true)){
+      let j=i+1;
+      while(j<T.length && isTitle(T[j]) && j+1<T.length && gap(text,T[j],T[j+1],true)) j++;
+      const f=T[j];
+      if(!f||stop(f)||isTitle(f)) continue;
+      const latin=isLatin(f.w);
+      if(latin && !isCap(f.w)) continue;
+      let last=j,count=1,k=j+1;
+      while(k<T.length && gap(text,T[k-1],T[k])){
+        const x=T[k];
+        const conn=latin?LA_CONN.has(x.n):AR_CONN.has(x.n);
+        if(conn && k+1<T.length && gap(text,x,T[k+1]) && !stop(T[k+1])){ last=k+1; k+=2; continue; }
+        if(stop(x)||isTitle(x)||count>=(latin?3:2)) break;
+        if(latin && !isCap(x.w)) break;
+        if(!latin && isLatin(x.w)) break;
+        last=k; count++; k++;
+      }
+      found.push(text.slice(f.s,T[last].e)); i=last; continue;
+    }
+    // 2) known first names
+    const latin=isLatin(t.w);
+    let pl=-1, last=i, compound=false;
+    if(latin){ if(isCap(t.w) && LA_FIRST.has(t.n)) pl=0; }
+    else{
+      pl=prefLen(t.n,AR_FIRST);
+      if(pl<0){ const c=prefLen(t.n,S('عبد أبو')); if(c>=0 && i+1<T.length && gap(text,t,T[i+1]) && T[i+1].n.startsWith('ال')){pl=c;compound=true;last=i+1;} }
+    }
+    if(pl<0) continue;
+    let count=compound?2:1, k=last+1;
+    while(k<T.length && gap(text,T[k-1],T[k]) && count<3){
+      const x=T[k];
+      if(latin){
+        if(!isLatin(x.w)) break;
+        if(LA_CONN.has(x.n) && k+1<T.length && gap(text,x,T[k+1]) && isCap(T[k+1].w) && !LA_STOP.has(T[k+1].n)){ last=k+1; k+=2; count++; continue; }
+        if(isCap(x.w) && !LA_STOP.has(x.n) && !LA_TITLES.has(x.n)){ last=k; k++; count++; continue; }
+        break;
+      }else{
+        if(isLatin(x.w)) break;
+        if(AR_CONN.has(x.n) && k+1<T.length && gap(text,x,T[k+1]) && !AR_STOP.has(T[k+1].n)){ last=k+1; k+=2; count++; continue; }
+        if(AR_STOP.has(x.n)||isTitle(x)) break;
+        if((x.n.startsWith('ال')&&x.n.length>=4) || (x.n.startsWith('بن')&&x.n.length>=4) || AR_FIRST.has(x.n)){ last=k; k++; count++; continue; }
+        break;
+      }
+    }
+    let start=t.s+pl;
+    if(latin && i>0 && isAllCaps(T[i-1].w) && !LA_STOP.has(T[i-1].n) && !LA_TITLES.has(T[i-1].n) && gap(text,T[i-1],t)) start=T[i-1].s;
+    found.push(text.slice(start,T[last].e)); i=last;
+  }
+  return found;
+}
+
+function escRe(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
+function fuzzy(s){
+  return s.trim().split(/\s+/).map(w=>[...w].map(ch=>{
+    if('اأإآٱ'.includes(ch)) return '[اأإآٱ]';
+    if('هة'.includes(ch)) return '[هة]';
+    if('يى'.includes(ch)) return '[يى]';
+    return escRe(ch);
+  }).join('')).join('[\\s\\u00A0]+');
+}
+
+/* ---------- structured data ---------- */
+const RULES=[
+  ['email', new RegExp('[A-Za-z0-9._%+\\-]+@[A-Za-z0-9\\-]+(?:\\.[A-Za-z0-9\\-]+)+','g')],
+  ['url',   new RegExp('(?:https?:\\/\\/|www\\.)[^\\s<>"\']+[^\\s<>"\'.,،;:!?)\\]]','gi')],
+  ['account', new RegExp('(?<![A-Za-z0-9])[A-Z]{2}\\d{2}(?:[ ]?[A-Z0-9]{4}){3,7}(?:[ ]?[A-Z0-9]{1,4})?(?![A-Za-z0-9])','g')],
+  ['phone', new RegExp(NBD+'(?:\\+|00)[1-9]'+DG+'{0,2}[\\s.\\-]?(?:\\(0\\)[\\s.\\-]?)?'+DG+'(?:[\\s.\\-]?'+DG+'){7,11}'+ND,'gu')],
+  ['account', new RegExp(NBD+DG+'(?:[ \\-]?'+DG+'){12,29}'+ND,'gu')],
+  ['phone', new RegExp(NBD+'[0٠][5-8٥-٨](?:[\\s.\\-]?'+DG+'){8}'+ND,'gu')],
+  ['cin',   new RegExp('(?<![A-Za-z0-9])[A-Z]{1,2}[ ]?'+DG+'{5,7}'+ND,'gu')],
+  ['date',  new RegExp(NBD+'(?:'+DG+'{1,2}[\\/\\-.]'+DG+'{1,2}[\\/\\-.]'+DG+'{2,4}|'+DG+'{4}[\\/\\-.]'+DG+'{1,2}[\\/\\-.]'+DG+'{1,2})'+ND,'gu')],
+  ['number',new RegExp(NBD+DG+'{8,}'+ND,'gu')],
+  ['address',new RegExp('(?<!['+LT+'])((?:و|ب|وب|ل)?)((?:زنقة|زنقه|شارع|درب|حي|إقامة|اقامة|عمارة|تجزئة|دوار|ساحة|Rue|Avenue|Av\\.|Bd|Boulevard|Résidence|Residence|Quartier|Hay|Derb|Lotissement|Immeuble|Imm\\.|Appt|Appartement)(?!['+LT+'])[^\\n,،.؛;]{2,60})','gu')]
+];
+
+const LABELS={
+  ar:{name:'اسم',phone:'هاتف',email:'بريد',url:'رابط',account:'رقم حساب',cin:'بطاقة وطنية',date:'تاريخ',number:'رقم',address:'عنوان'},
+  fr:{name:'NOM',phone:'TÉLÉPHONE',email:'EMAIL',url:'LIEN',account:'COMPTE',cin:'CIN',date:'DATE',number:'NUMÉRO',address:'ADRESSE'}
+};
+
+/* ---------- state ---------- */
+const $=id=>document.getElementById(id);
+const src=$('src'), out=$('out'), custom=$('custom');
+const kept=new Set();
+let plain='';
+function store(k,v){try{ if(v===undefined) return localStorage.getItem(k); localStorage.setItem(k,v);}catch(e){return null;}}
+
+function run(){
+  const text=src.value;
+  const on=t=>{const el=document.querySelector('[data-t="'+t+'"]');return el&&el.checked;};
+  const lang=$('lang').value, style=$('style').value, L=LABELS[lang];
+  const spans=[], items=new Map();
+  const overlaps=(s,e)=>spans.some(x=>s<x.e && e>x.s);
+  const note=(type,key,text,isKept)=>{
+    const id=type+'|'+key;
+    if(!items.has(id)) items.set(id,{type,key,text,count:0,kept:isKept});
+    items.get(id).count++;
+  };
+
+  for(const [type,re] of RULES){
+    if(!on(type)) continue;
+    re.lastIndex=0; let m;
+    while((m=re.exec(text))){
+      let s=m.index, val=m[0];
+      if(type==='address'){ s+=m[1].length; val=m[2].replace(/\s+$/,''); }
+      const e=s+val.length, key=norm(val);
+      if(overlaps(s,e)) continue;
+      if(kept.has(type+'|'+key)){ note(type,key,val,true); continue; }
+      spans.push({s,e,type,key}); note(type,key,val,false);
+    }
+  }
+
+  if(on('name')){
+    const extra=custom.value.split('\n').map(x=>x.trim()).filter(x=>x.length>=2);
+    const full=[...extra,...findNames(text)];
+    const groups=new Map(); // norm(full) -> display
+    for(const f of full){ const k=norm(f); if(k.length>=2 && !groups.has(k)) groups.set(k,f); }
+    const lookup=new Map(); // norm string -> group key
+    const shown=[];
+    for(const [k,f] of groups){
+      if(kept.has('name|'+k)){ note('name',k,f,true); continue; }
+      lookup.set(k,k); shown.push(f);
+    }
+    for(const [k,f] of groups){
+      if(kept.has('name|'+k)) continue;
+      for(const w of f.split(/\s+/)){
+        const n=norm(w);
+        if(n.length<3||lookup.has(n)||AR_CONN.has(n)||LA_CONN.has(n)||AR_STOP.has(n)||LA_STOP.has(n)||AR_TITLES.has(n)||LA_TITLES.has(n)) continue;
+        lookup.set(n,k); shown.push(w);
+      }
+    }
+    if(shown.length){
+      const alts=[...new Set(shown)].sort((a,b)=>b.length-a.length).map(fuzzy).join('|');
+      const re=new RegExp('(?<!['+LT+'])('+AR_PREF.join('|')+')?('+alts+')(?!['+LT+'])','giu');
+      let m;
+      while((m=re.exec(text))){
+        const word=m[2], key=lookup.get(norm(word));
+        if(!key) { re.lastIndex=m.index+1; continue; }
+        if(/^[a-z]/.test(word)) continue;
+        const s=m.index+(m[1]?m[1].length:0), e=s+word.length;
+        if(overlaps(s,e)) continue;
+        spans.push({s,e,type:'name',key}); note('name',key,groups.get(key),false);
+      }
+    }
+  }
+
+  spans.sort((a,b)=>a.s-b.s);
+  const nums={}; const label=sp=>{
+    nums[sp.type]=nums[sp.type]||new Map();
+    const mp=nums[sp.type]; if(!mp.has(sp.key)) mp.set(sp.key,mp.size+1);
+    if(style==='bar') return '███';
+    if(style==='gen') return '['+L[sp.type]+']';
+    return '['+L[sp.type]+' '+mp.get(sp.key)+']';
+  };
+  let html='', p='', pos=0;
+  const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  for(const sp of spans){
+    const lab=label(sp); sp.lab=lab;
+    p+=text.slice(pos,sp.s)+lab; html+=esc(text.slice(pos,sp.s))+'<mark class="r">'+esc(lab)+'</mark>'; pos=sp.e;
+  }
+  p+=text.slice(pos); html+=esc(text.slice(pos));
+  plain=p; out.innerHTML=html;
+  $('count').textContent=spans.length?'· '+spans.length+' حذف':'';
+
+  const labOf=new Map(spans.map(s=>[s.type+'|'+s.key,s.lab]));
+  const chips=$('chips'); chips.textContent='';
+  for(const [id,it] of items){
+    const b=document.createElement('button');
+    b.type='button'; b.className='chip'+(it.kept?' kept':'');
+    b.title=it.kept?'اضغط لحذفه من النص':'اضغط لإبقائه ظاهراً';
+    const k=document.createElement('span'); k.className='k'; k.textContent=it.kept?'ظاهر':(labOf.get(id)||L[it.type]);
+    const v=document.createElement('span'); v.className='v'; v.textContent=it.text;
+    b.append(k,v);
+    b.addEventListener('click',()=>{ kept.has(id)?kept.delete(id):kept.add(id); run(); });
+    chips.append(b);
+  }
+  $('found').hidden=items.size===0;
+}
+
+let tm; const later=()=>{clearTimeout(tm);tm=setTimeout(run,120);};
+src.addEventListener('input',later);
+custom.addEventListener('input',()=>{store('mimha-custom',custom.value);later();});
+document.querySelectorAll('#opts input,#opts select').forEach(el=>el.addEventListener('change',()=>{
+  if(el.tagName==='SELECT') store('mimha-'+el.id,el.value); run();
+}));
+
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),1800);}
+function fallbackCopy(){
+  const ta=document.createElement('textarea'); ta.value=plain; ta.setAttribute('readonly','');
+  ta.style.position='fixed'; ta.style.opacity='0'; document.body.append(ta); ta.select();
+  let ok=false; try{ok=document.execCommand('copy');}catch(e){}
+  ta.remove();
+  if(ok) toast('تم النسخ');
+  else{ const r=document.createRange(); r.selectNodeContents(out); const s=getSelection(); s.removeAllRanges(); s.addRange(r); toast('النص محدد، انسخه يدوياً'); }
+}
+$('copy').addEventListener('click',()=>{
+  if(!plain){toast('لا يوجد نص للنسخ');return;}
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(plain).then(()=>toast('تم النسخ'),fallbackCopy);
+  }else fallbackCopy();
+});
+$('clear').addEventListener('click',()=>{src.value='';kept.clear();run();src.focus();});
+
+const c=store('mimha-custom'); if(c){custom.value=c; $('more').open=true;}
+for(const id of ['style','lang']){const v=store('mimha-'+id); if(v) $(id).value=v;}
+
+src.value='مثال (امسحه والصق نصك):\n'+
+'حضر السيد كريم بناني، الساكن بزنقة الياسمين رقم 14 حي السلام، إلى المكتب رفقة زوجته فاطمة الزهراء العلوي. '+
+'هاتف كريم: 0612345678، وبريده karim.bennani@gmail.com، ورقم بطاقته الوطنية BK123456.\n\n'+
+'Mme Salma El Idrissi a confirmé le virement sur le RIB 011 780 0000123456789012 34. Contact : +212 6 61 23 45 67.';
+run();
+})();
+</script>
